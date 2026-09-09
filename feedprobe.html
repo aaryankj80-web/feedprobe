@@ -1,0 +1,1273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Feedprobe — AI persona social prediction</title>
+<style>
+/* ── Feedprobe — light, Viriety-inspired theme ──────────────────────────── */
+:root {
+  --bg:#f6f7fb; --card:#ffffff; --line:#e5e8f0; --line2:#cbd3e1;
+  --text:#171a21; --muted:#6b7280; --head:#3a4150;
+  --blue:#2563eb; --blue-bg:#eaf1fe; --orange:#f97316; --orange-bg:#fff3e9;
+  --dark:#1f2430; --green:#16a34a; --red:#ef4444;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; min-height:100vh; }
+
+/* ── Header ── */
+.topbar {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:15px 28px; background:var(--card); border-bottom:1px solid var(--line);
+  position:sticky; top:0; z-index:5;
+}
+.brand { display:flex; align-items:center; gap:10px; font-size:19px; font-weight:800; }
+.brand .logo { font-size:20px; }
+.badge { background:#eef0f5; color:#4b5563; font-size:11px; font-weight:600; border-radius:999px; padding:3px 10px; }
+.counter { font-size:13px; color:var(--muted); }
+
+.layout { max-width:1240px; margin:0 auto; padding:26px 28px 60px; display:flex; flex-direction:column; gap:34px; }
+
+/* ── Numbered section headers ── */
+.block-head { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.num { color:var(--blue); font-weight:800; font-size:15px; letter-spacing:1px; }
+.block-head h2 { font-size:15px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--head); }
+.block-link { margin-left:auto; font-size:12.5px; color:var(--blue); text-decoration:none; cursor:pointer; }
+.block-sub { margin-left:auto; color:var(--muted); font-size:12.5px; }
+.view-switch { display:flex; gap:6px; }
+.view-switch button { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:5px 12px; font-size:12px; color:var(--muted); cursor:pointer; }
+.view-switch button.on { background:var(--blue); border-color:var(--blue); color:#fff; }
+
+/* ── Cards & grids ── */
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+.input-grid { display:grid; grid-template-columns:1.15fr 1fr 1fr; gap:14px; }
+@media (max-width:1100px) { .input-grid { grid-template-columns:1fr; } }
+.card-title { font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+
+label { display:block; font-size:12px; color:var(--muted); margin-bottom:10px; }
+label .val { color:var(--blue); font-weight:700; }
+label .muted { font-weight:400; }
+input[type="text"], input[type="number"], textarea, select {
+  width:100%; margin-top:4px; padding:8px 10px; background:#fff;
+  border:1px solid var(--line2); border-radius:8px; color:var(--text); font:inherit; outline:none;
+}
+input:focus, textarea:focus, select:focus { border-color:var(--blue); }
+input[type="range"] { width:100%; accent-color:var(--blue); margin-top:6px; }
+.row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+/* ── Upload dropzone ── */
+.dropzone { border:2px dashed var(--line2); border-radius:10px; padding:14px 12px; text-align:center; cursor:pointer; transition:border-color .15s, background .15s; }
+.dropzone:hover, .dropzone.drag { border-color:var(--blue); background:var(--blue-bg); }
+.dz-icon { font-size:24px; display:block; }
+.dz-main { font-size:12.5px; color:var(--text); margin-top:5px; }
+.dz-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+.video-preview { width:100%; max-height:150px; border-radius:8px; margin-top:9px; background:#000; }
+.dz-file { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:9px; font-size:11.5px; color:var(--muted); text-align:left; }
+.dz-clear { background:none; border:1px solid var(--line); color:var(--muted); border-radius:7px; padding:3px 9px; font-size:11px; cursor:pointer; white-space:nowrap; }
+.dz-clear:hover { color:var(--text); border-color:var(--line2); }
+
+/* ── Chips ── */
+.chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:4px; }
+.chip { background:#f3f4f8; border:1px solid var(--line); color:var(--muted); border-radius:999px; padding:4px 10px; font-size:11.5px; cursor:pointer; transition:all .15s; }
+.chip:hover { border-color:var(--line2); color:var(--text); }
+.chip.on { background:var(--blue-bg); border-color:var(--blue); color:var(--blue); }
+
+/* ── Buttons ── */
+.run, .ghost { width:100%; margin-top:8px; padding:11px; border-radius:9px; font:700 14px/1 system-ui; cursor:pointer; border:none; transition:transform .1s, opacity .2s; }
+.run { background:var(--dark); color:#fff; }
+.run:hover { transform:translateY(-1px); }
+.run:disabled { opacity:.5; cursor:wait; }
+.ghost { background:transparent; color:var(--muted); border:1px solid var(--line); }
+.ghost:hover { color:var(--text); border-color:var(--line2); }
+.hint { font-size:11px; color:#98a0b3; margin-top:10px; }
+#seedLine { display:block; color:#a5adbf; font-family:ui-monospace,monospace; font-size:10.5px; margin-top:4px; }
+
+/* ── OUTBREAK viz ── */
+.viz { padding:10px; }
+.viz canvas { width:100%; display:block; }
+.map-legend { display:flex; gap:18px; justify-content:center; align-items:center; font-size:12px; color:var(--muted); padding:10px 0 2px; flex-wrap:wrap; }
+.map-legend .lg { display:flex; align-items:center; gap:7px; }
+.map-legend canvas { width:16px; height:22px; }
+
+.metrics { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-top:14px; }
+@media (max-width:1300px) { .metrics { grid-template-columns:repeat(3,1fr); } }
+.metric { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+.m-label { font-size:10.5px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); }
+.m-value { font-size:24px; font-weight:800; margin:3px 0 1px; }
+.m-sub { font-size:11px; color:var(--muted); }
+
+/* ── FINDINGS ── */
+.results-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media (max-width:1100px) { .results-grid { grid-template-columns:1fr; } }
+.card h3 { font-size:13px; margin-bottom:2px; display:flex; align-items:baseline; gap:8px; }
+.card h3 .sub { font-size:11px; color:var(--muted); font-weight:400; }
+
+.cbar { margin-bottom:10px; }
+.cbar-top { display:flex; justify-content:space-between; gap:10px; margin-bottom:4px; }
+.cbar-label { font-weight:600; font-size:12.5px; }
+.cbar-meta { color:var(--muted); font-size:10.5px; text-align:right; }
+.cbar-track { height:7px; background:#eef0f5; border-radius:6px; overflow:hidden; }
+.cbar-fill { height:100%; background:linear-gradient(90deg,var(--blue),#7aa5f5); border-radius:6px; }
+
+.feed { max-height:340px; overflow-y:auto; margin-top:8px; padding-right:4px; }
+.wave { margin-bottom:10px; }
+.wave-head { display:flex; justify-content:space-between; align-items:center; padding:4px 9px; margin-bottom:5px; background:#f3f4f8; border-radius:7px; }
+.wave-n { font-weight:700; font-size:11.5px; color:var(--blue); }
+.wave-meta { font-size:10.5px; color:var(--muted); }
+.evt { display:grid; grid-template-columns:26px 1fr auto; gap:8px; align-items:start; padding:5px 7px; border-radius:7px; animation:fadeIn .25s ease; }
+.evt:hover { background:#f8f9fc; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; } }
+.ava { font-size:15px; line-height:1.4; }
+.who b { font-size:12px; }
+.who .bio { display:block; font-size:10px; color:#98a0b3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:280px; }
+.act { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; padding:2px 7px; border-radius:999px; white-space:nowrap; }
+.act-like { background:#fee2e2; color:#dc2626; }
+.act-comment { background:var(--blue-bg); color:var(--blue); }
+.act-share { background:#dcfce7; color:var(--green); }
+.act-watch { background:#eef0f5; color:#6b7280; }
+.act-skip { background:#f3f4f6; color:#a5adbf; }
+.evt-comment { grid-column:2 / -1; font-size:11.5px; color:#3a4150; background:var(--blue-bg); border-left:2px solid var(--blue); padding:4px 8px; border-radius:0 6px 6px 0; }
+
+.insights { list-style:none; }
+.insight { display:flex; gap:9px; padding:9px 0; border-bottom:1px solid var(--line); }
+.insight:last-child { border-bottom:none; }
+.ins-icon { font-size:13px; line-height:1.6; }
+.insight b { font-size:12.5px; }
+.insight p { font-size:11.5px; color:var(--muted); margin-top:1px; }
+
+.comments { display:flex; flex-direction:column; gap:9px; }
+.comment { display:flex; gap:9px; background:#f8f9fc; border:1px solid var(--line); border-radius:9px; padding:9px 11px; }
+.comment-body b { font-size:12px; }
+.comment-body p { font-size:12.5px; color:#2b3140; margin-top:1px; }
+.muted { color:var(--muted); font-weight:400; }
+
+.placeholder { color:#9aa3b5; padding:22px 10px; text-align:center; font-size:12.5px; }
+.placeholder.error { color:var(--red); }
+.status-ok { color:var(--green); }
+::-webkit-scrollbar { width:9px; height:9px; }
+::-webkit-scrollbar-thumb { background:#d7dbe6; border-radius:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="logo">🔭</span>Feedprobe <span class="badge">Beta report</span></div>
+  <div class="counter" id="agentCounter">200 agents</div>
+</header>
+
+<main class="layout">
+
+  <!-- ── 01 · INPUT ─────────────────────────────────────── -->
+  <section class="block">
+    <div class="block-head">
+      <span class="num">01</span><h2>Input</h2>
+      <a class="block-link" id="dzLink">Drop or click icon to create datasource →</a>
+    </div>
+
+    <div class="input-grid">
+      <!-- Datasource: video -->
+      <div class="card">
+        <p class="card-title">Datasource · video</p>
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="videoFile" accept="video/*" hidden />
+          <div class="dz-inner" id="dzInner">
+            <span class="dz-icon">🎬</span>
+            <p class="dz-main">Drop your product demo here</p>
+            <p class="dz-sub">or click to browse — the file never leaves your browser</p>
+          </div>
+          <video id="videoPreview" class="video-preview" muted playsinline hidden></video>
+          <div class="dz-file" id="dzFile" hidden>
+            <span id="dzFileMeta"></span>
+            <button type="button" class="dz-clear" id="dzClear">✕ Remove</button>
+          </div>
+        </div>
+        <label style="margin-top:10px">Title
+          <input id="title" value="Smart Fitness Mat — Guided Home Workouts" spellcheck="false" />
+        </label>
+        <label>Description
+          <textarea id="desc" rows="3" spellcheck="false">A smart workout mat that tracks reps, posture and calories with LED-guided home training sessions. Streams coaching to your phone — perfect for beginners and pros.</textarea>
+        </label>
+        <label>Tags <span class="muted">comma separated</span>
+          <input id="tags" value="home workout, fitness mat, smart gym, training" spellcheck="false" />
+        </label>
+      </div>
+
+      <!-- Content attributes -->
+      <div class="card">
+        <p class="card-title">Content attributes</p>
+        <div class="row">
+          <label>Format
+            <select id="style">
+              <option value="demo" selected>Product demo</option>
+              <option value="tutorial">Tutorial / how-to</option>
+              <option value="unboxing">Unboxing</option>
+              <option value="vlog">Vlog / lifestyle</option>
+              <option value="testimonial">Testimonial</option>
+              <option value="ad">Ad / promo</option>
+            </select>
+          </label>
+          <label>Length
+            <select id="length">
+              <option value="30">≤ 30s</option>
+              <option value="60" selected>~1 min</option>
+              <option value="120">~2 min</option>
+              <option value="300">5 min+</option>
+            </select>
+          </label>
+        </div>
+        <label>Hook strength <span class="val" id="hookVal">8</span>
+          <input type="range" id="hook" min="1" max="10" value="8" />
+        </label>
+        <label>Production quality <span class="val" id="qualityVal">7</span>
+          <input type="range" id="quality" min="1" max="10" value="7" />
+        </label>
+        <p class="hint">Data handlers and small models run tests downstream: personas weigh content against their interests, biases and social graph before acting.</p>
+      </div>
+
+      <!-- Audience + controls -->
+      <div class="card">
+        <p class="card-title">Target audience</p>
+        <label>Describe it <span class="muted">keywords auto-detected</span>
+          <input id="audDesc" value="Gen Z and millennial fitness &amp; wellness enthusiasts in the US" spellcheck="false" />
+        </label>
+        <label>Age
+          <select id="ageRange">
+            <option value="any">Any age</option>
+            <option value="13-17">13–17</option>
+            <option value="18-24">18–24</option>
+            <option value="18-34" selected>18–34</option>
+            <option value="25-44">25–44</option>
+            <option value="35+">35+</option>
+          </select>
+        </label>
+        <label>Interest clusters</label>
+        <div class="chips" id="audChips"></div>
+
+        <p class="card-title" style="margin-top:14px">Simulation</p>
+        <div class="row">
+          <label>Agents
+            <select id="poolSize">
+              <option value="100">100 agents</option>
+              <option value="200" selected>200 agents</option>
+              <option value="300">300 agents</option>
+              <option value="400">400 agents</option>
+              <option value="500">500 agents</option>
+              <option value="600">600 agents</option>
+            </select>
+          </label>
+          <label>Seed audience
+            <input type="number" id="seedSize" value="12" min="5" max="40" />
+          </label>
+        </div>
+        <div class="row">
+          <label>Waves (steps)
+            <input type="number" id="maxWaves" value="12" min="2" max="20" />
+          </label>
+          <label>Outer explore %
+            <input type="number" id="outerPct" value="8" min="0" max="40" />
+          </label>
+        </div>
+        <button id="runBtn" class="run">▶ Run simulation…</button>
+        <button id="replayBtn" class="ghost">🔁 Replay same seed</button>
+        <p class="hint">Deterministic per seed. Same inputs + same seed ⇒ same result.
+          <span id="seedLine"></span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 02 · OUTBREAK ───────────────────────────────────── -->
+  <section class="block">
+    <div class="block-head">
+      <span class="num">02</span><h2>Outbreak</h2>
+      <span class="block-sub" id="simStatus">idle</span>
+      <div class="view-switch">
+        <button id="viewMap" class="on">◉ Agents map</button>
+        <button id="viewCurve">📈 Spread</button>
+      </div>
+    </div>
+
+    <div class="card viz">
+      <canvas id="vizChart" height="430"></canvas>
+      <div class="map-legend" id="mapLegend">
+        <span class="lg"><canvas id="lgSeen"></canvas>Seen · no engagement</span>
+        <span class="lg"><canvas id="lgCore"></canvas>Engaged · in-target</span>
+        <span class="lg"><canvas id="lgBreak"></canvas>Engaged · breakout</span>
+      </div>
+    </div>
+
+    <div class="metrics" id="metrics">
+      <div class="placeholder">Run a simulation to see predicted performance →</div>
+    </div>
+  </section>
+
+  <!-- ── 03 · FINDINGS ───────────────────────────────────── -->
+  <section class="block">
+    <div class="block-head"><span class="num">03</span><h2>Findings</h2></div>
+    <div class="results-grid">
+      <div class="card">
+        <h3>Insights</h3>
+        <ul id="insights" class="insights"></ul>
+      </div>
+      <div class="card">
+        <h3>Top comments from agents</h3>
+        <div id="comments" class="comments"></div>
+      </div>
+      <div class="card">
+        <h3>Cluster engagement <span class="sub">who engaged most</span></h3>
+        <div id="clusterBars" class="cluster-bars"></div>
+      </div>
+      <div class="card">
+        <h3>Agent actions feed <span class="sub">live playback</span></h3>
+        <div id="feed" class="feed"><div class="placeholder">Agents will act here, wave by wave…</div></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   FEEDPROBE SIMULATION ENGINE — vanilla JS, no dependencies
+   ══════════════════════════════════════════════════════════════════════════ */
+
+// ── Utilities ───────────────────────────────────────────────────────────────
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const pick = (arr, rng) => arr[Math.floor(rng() * arr.length)];
+const randInt = (min, max, rng) => min + Math.floor(rng() * (max - min + 1));
+function sample(arr, n, rng) {
+  const pool = arr.slice(); const out = []; const k = Math.min(n, pool.length);
+  for (let i = 0; i < k; i++) { const j = Math.floor(rng() * pool.length); out.push(pool[j]); pool.splice(j, 1); }
+  return out;
+}
+const clamp = (x, min, max) => Math.min(max, Math.max(min, x));
+const clamp01 = (x) => clamp(x, 0, 1);
+const round1 = (x) => Math.round(x * 10) / 10;
+const round2 = (x) => Math.round(x * 100) / 100;
+
+const STOPWORDS = new Set([
+  'the','and','for','with','this','that','your','you','our','are','was','have','has',
+  'from','they','them','there','here','what','when','where','will','just','very','really',
+  'make','made','best','great','like','love','need','get','into','over','about','more',
+]);
+
+function tagSimilarity(a, b) {
+  a = String(a).toLowerCase().trim(); b = String(b).toLowerCase().trim();
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if (a.includes(b) || b.includes(a)) return 0.8;
+  const aw = a.split(/[\s+#]+/).filter((w) => w.length > 1);
+  const bw = b.split(/[\s+#]+/).filter((w) => w.length > 1);
+  const overlap = aw.filter((w) => bw.includes(w)).length;
+  if (overlap > 0) return 0.5 * (overlap / Math.min(aw.length, bw.length));
+  return 0;
+}
+
+function extractKeywords(text, max) {
+  max = max || 8;
+  const counts = new Map();
+  for (const w of String(text).toLowerCase().split(/[^a-z0-9+#]+/)) {
+    if (w.length < 3 || STOPWORDS.has(w)) continue;
+    counts.set(w, (counts.get(w) || 0) + 1);
+  }
+  return [...counts.entries()].sort((x, y) => y[1] - x[1]).slice(0, max).map(([w]) => w);
+}
+
+// ── Persona pool ────────────────────────────────────────────────────────────
+
+const CLUSTERS = {
+  fitness:   { label:'Fitness & Wellness',   emoji:'🏋️', tags:['fitness','workout','wellness','health','gym','running','yoga'] },
+  tech:      { label:'Tech & Gadgets',       emoji:'💻', tags:['tech','gadgets','ai','software','startup','review','gadget'] },
+  beauty:    { label:'Beauty & Self-care',   emoji:'💄', tags:['skincare','makeup','beauty','self-care','hair'] },
+  gaming:    { label:'Gaming',               emoji:'🎮', tags:['gaming','esports','streaming','setup','pc-build'] },
+  food:      { label:'Food & Cooking',       emoji:'🍜', tags:['food','cooking','recipes','baking','meal-prep','kitchen'] },
+  travel:    { label:'Travel & Adventure',   emoji:'✈️', tags:['travel','adventure','outdoors','photography','hiking'] },
+  fashion:   { label:'Fashion & Streetwear', emoji:'👟', tags:['fashion','streetwear','outfits','sneakers','thrifting'] },
+  finance:   { label:'Finance & Side-hustles', emoji:'📈', tags:['investing','finance','side-hustle','crypto','budgeting','business'] },
+  parenting: { label:'Parenting & Home',     emoji:'👶', tags:['parenting','kids','home','organization','family'] },
+  music:     { label:'Music & Culture',      emoji:'🎧', tags:['music','concerts','art','creativity','producing'] },
+  sports:    { label:'Sports & Training',    emoji:'⚽', tags:['sports','basketball','football','training','strength'] },
+  education: { label:'Self-improvement',     emoji:'📚', tags:['learning','books','study','productivity','career','self-improvement'] },
+  pets:      { label:'Pets & Animals',       emoji:'🐶', tags:['pets','dogs','cats','animals'] },
+  automotive:{ label:'Automotive',           emoji:'🚗', tags:['cars','motorcycles','detailing','ev','mods'] },
+};
+const CLUSTER_KEYS = Object.keys(CLUSTERS);
+
+const FIRST_NAMES = {
+  F: ['Maya','Priya','Sofia','Chloe','Aisha','Emma','Zara','Lily','Nina','Isabella','Mia','Riley','Amara','Hana','Elena','Grace','Ava','Layla','Nora','Tara'],
+  M: ['Marcus','Diego','Kenji','Liam','Noah','Dev','Andre','Omar','Luca','Ethan','Kai','Sam','Arjun','Jake','Leo','Ravi','Marco','Theo','Finn','Ali'],
+  NB:['Riley','Alex','Jordan','Casey','Quinn','Rowan','Skyler','Taylor','Reese','Drew','Avery','Morgan','Parker','Sage','Noel'],
+};
+const LAST_NAMES = ['Kumar','Chen','Garcia','Smith','Nguyen','Patel','Kim','Rossi','Okafor','Silva','Tanaka','Brown','Haddad','Novak','Iyer','Costa','Ali','Fernandez','Walker','Ivanov'];
+const REGIONS = ['US','UK','CA','AU','IN','BR','DE','FR','NL','SG','ZA','JP'];
+const REGION_LABEL = { US:'the US', UK:'the UK', CA:'Canada', AU:'Australia', IN:'India', BR:'Brazil', DE:'Germany', FR:'France', NL:'the Netherlands', SG:'Singapore', ZA:'South Africa', JP:'Japan' };
+const AVATARS = ['😎','🦊','🐼','🔥','🦄','🐺','🦁','🐯','🌊','⚡','🍀','🌙','🪐','🌸','🥷','🧙','🤖','🛹','🎸','🏀','💎','🎧','📸','🌮','🚀','🦋','🐸','🍉','🧊','✨'];
+
+const AGE_MID = { '13-17':15, '18-24':21, '25-34':29, '35-44':39, '45-54':49, '55+':62 };
+
+const FLAVORS = {
+  fitness:['Trains 6 days a week 💪','Meal-preps every Sunday','Marathon training, always','Lives in the gym and comments on every workout post'],
+  tech:['First to buy new gadgets 📱','Runs a tiny YouTube review channel','Beta-tests everything','Explains specs to anyone who asks'],
+  beauty:['Skincare routine is a ritual ✨','Reviews every serum that drops','Makeup looks on weekends','Self-care is non-negotiable'],
+  gaming:['Nightly squad sessions 🎮','Clips or it didn’t happen','Builds PCs in their spare time','Day-one preorders only'],
+  food:['Tries every trending recipe 🍜','Feeds the whole friend group','Bakes on rainy days','Restaurant reviews are their love language'],
+  travel:['Bucket list is very long ✈️','Backpacks through anywhere','Scouts the best photo spots','Travel hacks saved in notes'],
+  fashion:['Fit-check daily 👟','Hunts for grails at thrift stores','Color theory applies to outfits','Sneaker rotation is serious'],
+  finance:['Dollar-cost averages weekly 📈','Side-hustles in three industries','Budgeting spreadsheet owner','Reads finance books for fun'],
+  parenting:['Two kids, zero free time 👶','Runs the family group chat','DIY everything at home','Organizes the whole household'],
+  music:['Playlists for every mood 🎧','Drafts beats on a laptop','Concert season is sacred','Finds artists before they blow up'],
+  sports:['Hit the court every week 🏀','Studies game film for fun','Team captain energy','Gym session is non-negotiable'],
+  education:['Reads 40 books a year 📚','Learns something new daily','Notion workspace of their dreams','Takes courses for the fun of it'],
+  pets:['Dog mom/dad, obviously 🐶','Fosters when they can','Pet photos on every feed','Knows every dog in the park'],
+  automotive:['Washes the car by hand 🚗','Follows every mod build','Track days when possible','Debates EV vs gas daily'],
+};
+const GENERIC_FLAVORS = ['Posts once a week, lurks daily','Scroller with strong opinions','Follows the trends before they trend','Here for the good content'];
+
+const AGE_WEIGHTS = [['13-17',0.08],['18-24',0.28],['25-34',0.26],['35-44',0.18],['45-54',0.12],['55+',0.08]];
+
+function weightedAge(rng) {
+  const r = rng(); let acc = 0;
+  for (const [group, w] of AGE_WEIGHTS) { acc += w; if (r <= acc) return group; }
+  return '55+';
+}
+
+function pickClustersNear(targetTags, rng, count) {
+  const scored = CLUSTER_KEYS.map((k) => {
+    let best = 0;
+    for (const ct of CLUSTERS[k].tags) for (const tt of targetTags) {
+      const m = tagSimilarity(ct, tt); if (m > best) best = m;
+    }
+    return { k, score: best };
+  }).sort((a, b) => b.score - a.score);
+  const top = scored.slice(0, 5).filter((s) => s.score > 0);
+  const candidates = top.length ? top : scored.slice(0, 5);
+  const out = []; const pool = candidates.slice();
+  while (out.length < count && pool.length) {
+    const total = pool.reduce((s, x) => s + 0.2 + x.score, 0);
+    let r = rng() * total; let i = 0;
+    for (; i < pool.length; i++) { r -= 0.2 + pool[i].score; if (r <= 0) break; }
+    out.push(pool[i].k); pool.splice(i, 1);
+  }
+  return out;
+}
+
+function buildInterests(clusters, rng) {
+  const seen = new Set(); const out = [];
+  for (const c of clusters) {
+    const tags = CLUSTERS[c].tags;
+    const n = tags.length === 1 ? 1 : randInt(1, Math.min(2, tags.length), rng);
+    for (const t of sample(tags, n, rng)) {
+      if (seen.has(t)) continue;
+      seen.add(t);
+      out.push({ tag: t, weight: round1(0.6 + rng() * 0.4) });
+    }
+  }
+  return out;
+}
+
+function bioFor(p, rng) {
+  const primary = CLUSTERS[p.clusters[0]];
+  const flavorPool = FLAVORS[p.clusters[0]] || GENERIC_FLAVORS;
+  const flavor = pick(flavorPool, rng);
+  const label = primary ? primary.label : 'social media';
+  return p.ageGroup + ', ' + label.toLowerCase() + ' · ' + (REGION_LABEL[p.region] || p.region) + '. ' + flavor;
+}
+
+function targetFitOf(p, audience) {
+  const tags = (audience.interestTags || []).map((t) => String(t).toLowerCase()).filter(Boolean);
+  if (!tags.length) return 0;
+  let match = 0;
+  for (const t of tags) {
+    const inInterests = p.interests.some((i) => tagSimilarity(i.tag, t) > 0.5);
+    const inClusters = p.clusters.some((c) => CLUSTERS[c].tags.some((ct) => tagSimilarity(ct, t) > 0.5));
+    if (inInterests || inClusters) match++;
+  }
+  let score = match / tags.length;
+  const mid = AGE_MID[p.ageGroup];
+  if (mid < audience.ageMin || mid > audience.ageMax) score *= 0.5;
+  if (audience.regions && audience.regions.length && !audience.regions.includes(p.region)) score *= 0.8;
+  return score;
+}
+
+function makePersona(id, rng, audience, biasTarget) {
+  const gender = pick(['F','M','NB'], rng);
+  const ageGroup = weightedAge(rng);
+  const region = pick(REGIONS, rng);
+  const targetTags = (audience.interestTags || []).map((t) => String(t).toLowerCase()).filter(Boolean);
+  const clusterCount = randInt(1, 3, rng);
+  const clusters = (biasTarget && targetTags.length)
+    ? pickClustersNear(targetTags, rng, clusterCount)
+    : sample(CLUSTER_KEYS, clusterCount, rng);
+  const interests = buildInterests(clusters, rng);
+  const fit = targetFitOf({ clusters, ageGroup, region, interests }, audience);
+  const inTarget = targetTags.length > 0 && fit >= 0.35;
+  const ageMid = AGE_MID[ageGroup];
+  const young = ageMid >= 18 && ageMid <= 34;
+  const likeBias = clamp01(0.44 + (young ? 0.08 : 0) + (rng() - 0.5) * 0.3);
+  const commentBias = clamp01(0.16 + (young ? 0.04 : 0) + (rng() - 0.5) * 0.18);
+  const shareBias = clamp01(0.14 + (ageMid >= 18 && ageMid <= 24 ? 0.07 : 0) + (rng() - 0.5) * 0.16);
+  return {
+    id, name: pick(FIRST_NAMES[gender], rng) + ' ' + pick(LAST_NAMES, rng),
+    emoji: pick(AVATARS, rng), bio: bioFor({ ageGroup, clusters, region }, rng),
+    ageGroup, gender, region, clusters, interests,
+    likeBias, commentBias, shareBias,
+    activity: clamp01(0.45 + rng() * 0.5),
+    inTarget, targetFit: fit,
+  };
+}
+
+function buildPool(poolSize, audience, rng) {
+  const targetTags = (audience.interestTags || []).map((t) => String(t).toLowerCase()).filter(Boolean);
+  const pool = [];
+  for (let i = 0; i < poolSize; i++) {
+    const biasTarget = targetTags.length > 0 && rng() < 0.62;
+    pool.push(makePersona(i, rng, audience, biasTarget));
+  }
+  const targetCount = pool.filter((p) => p.inTarget).length;
+  if (targetCount === 0 && targetTags.length > 0) {
+    const n = Math.max(1, Math.floor(poolSize * 0.12));
+    for (let i = 0; i < n; i++) {
+      const p = pool[i];
+      const clusters = pickClustersNear(targetTags, rng, randInt(2, 3, rng));
+      pool[i] = Object.assign({}, p, { clusters, interests: buildInterests(clusters, rng), inTarget: true, targetFit: 1 });
+    }
+  }
+  return pool;
+}
+
+// ── Content scoring ─────────────────────────────────────────────────────────
+
+function buildContentVector(c) {
+  const seen = new Map();
+  const add = (t, w) => { const s = String(t).toLowerCase().trim(); if (s.length < 2) return; seen.set(s, Math.max(seen.get(s) || 0, w)); };
+  (c.tags || []).forEach((t) => add(t, 1.5));
+  if (c.style) add(c.style, 0.6);
+  extractKeywords((c.title || '') + ' ' + (c.description || '')).forEach((w) => add(w, 0.3));
+  return {
+    tags: [...seen.entries()].map(([tag, weight]) => ({ tag, weight })),
+    style: String(c.style || '').toLowerCase(),
+    hook: clamp01((Number(c.hook) || 5) / 10),
+    quality: clamp01((Number(c.quality) || 5) / 10),
+    lengthSec: Number(c.lengthSec) || 60,
+  };
+}
+
+function affinity(p, v) {
+  if (!v.tags.length) return 0.3;
+  let fit = 0, total = 0;
+  for (const ct of v.tags) {
+    total += ct.weight;
+    let best = 0;
+    for (const it of p.interests) { const m = tagSimilarity(ct.tag, it.tag); if (m > best) best = m; }
+    fit += ct.weight * best;
+  }
+  const interestFit = fit / total;
+  const lengthPenalty = v.lengthSec > 90 ? Math.min(0.3, ((v.lengthSec - 90) / 60) * 0.12) : 0;
+  const stylePenalty = v.style === 'ad' ? 0.05 : 0;
+  return clamp01(0.6 * interestFit + 0.2 * v.hook + 0.2 * v.quality - lengthPenalty - stylePenalty);
+}
+
+function engagementProbs(p, v) {
+  const a = affinity(p, v);
+  return {
+    watch: clamp01(p.activity * (0.4 + 0.6 * a)),
+    like: clamp01(p.likeBias * (0.3 + 0.7 * a)),
+    comment: clamp01(p.commentBias * (0.25 + 0.75 * a)),
+    share: clamp01(p.shareBias * (0.15 + 0.85 * a)),
+  };
+}
+
+function relatedness(a, b) {
+  const ca = new Set(a.clusters), cb = new Set(b.clusters);
+  let inter = 0; for (const c of ca) if (cb.has(c)) inter++;
+  const clusterSim = inter / Math.max(1, Math.min(ca.size, cb.size));
+  let interestHits = 0;
+  for (const ia of a.interests) for (const ib of b.interests) { if (tagSimilarity(ia.tag, ib.tag) > 0.5) { interestHits++; break; } }
+  const interestSim = interestHits / Math.max(1, a.interests.length);
+  const ageSim = 1 - Math.abs(AGE_MID[a.ageGroup] - AGE_MID[b.ageGroup]) / 50;
+  const regionSim = a.region === b.region ? 1 : 0.15;
+  return clamp01(0.4 * clusterSim + 0.3 * interestSim + 0.15 * ageSim + 0.15 * regionSim);
+}
+
+// ── Agent comments ──────────────────────────────────────────────────────────
+
+const COMMENT_TEMPLATES = {
+  fitness:['Adding this to my workout rotation 💪','This is exactly what I needed for training','Does it hold up after 3 months of use?','My trainer would love this'],
+  tech:['The demo sold me — ordering now','Specs look great, what about battery life?','This is the kind of product the algorithm should push more','Clean setup, love the attention to detail'],
+  beauty:['This looks so good on camera 😍','Need this in my routine ASAP','Saving this for later','This lighting makes everything better'],
+  gaming:['This is a day-one cop for me','The build quality looks sick','Instant like, instant follow','This belongs on my setup'],
+  food:['This looks unreal 🤤','Recipe please!!','Would this work with gluten-free swaps?','Trying this weekend for sure'],
+  travel:['Adding this to my bucket list ✈️','This is the content I stay for','Gorgeous — where was this filmed?','Perfect for my next trip'],
+  fashion:['This fits the fit 🔥','Where can I cop this?','Rotation just got bigger','That clean aesthetic though'],
+  finance:['This is actually practical advice','Rate this higher please 📈','The math here is solid','Bookmarking this one'],
+  parenting:['My kids would love this','Finally something useful on my feed','This saves me so much time','Sharing this with the family group'],
+  music:['This vibe is unmatched 🎧','The sound design is clean','More of this please','This is going on my playlist'],
+  sports:['This is elite training content 🏆','My whole team needs to see this','Game changer for my form','The replay value is high'],
+  education:['Explains it better than my textbooks','Subscribed immediately','The productivity nerd in me loves this','This is the push I needed'],
+  pets:['My dog approves 🐶','This is so wholesome','Sharing this with the pet group','Needed this energy today'],
+  automotive:['The detail work is clean 🚗','This mod is on my list now','What does that run?','Garage goals'],
+};
+const GENERIC_COMMENTS = [
+  'This actually looks useful','The algorithm got it right this time','Instantly shared with my group chat',
+  'Been waiting for something like this','This is why I keep the app','Rate this higher please 🙏',
+  'Underrated content honestly','This deserves more views',
+];
+
+function commentFor(p, v, rng) {
+  if (v.tags.length && rng() < 0.35) {
+    const tag = pick(v.tags, rng).tag;
+    if (tag.length > 2 && tag.length < 40) {
+      const opener = pick(['Honestly,','Ngl,','Real talk,'], rng);
+      const closer = pick([' is exactly my thing right now',' content I actually want',' hits different',' — instant save'], rng);
+      return opener + ' “' + tag + '”' + closer;
+    }
+  }
+  return pick(COMMENT_TEMPLATES[p.clusters[0]] || GENERIC_COMMENTS, rng);
+}
+
+// ── Simulation: Explore-algorithm replication ───────────────────────────────
+
+function simulate(contentIn, audienceIn, cfg) {
+  const seed = (typeof cfg.seed === 'number') ? cfg.seed : Math.floor(Math.random() * 1e9);
+  const rng = mulberry32(seed);
+  const poolSize = clamp(cfg.poolSize || 200, 40, 600);
+  const seedSize = clamp(cfg.seedSize || 12, 5, poolSize);
+  const maxWaves = clamp(cfg.maxWaves || 12, 2, 20);
+  const outerExplorePct = clamp(cfg.outerExplorePct == null ? 8 : cfg.outerExplorePct, 0, 40);
+
+  const content = buildContentVector(contentIn);
+  const pool = buildPool(poolSize, audienceIn, rng);
+  const byId = new Map(pool.map((p) => [p.id, p]));
+
+  const seen = new Set();
+  const engaged = new Map();
+  const waves = [];
+
+  const target = pool.filter((p) => p.inTarget);
+  const seedPool = target.length >= seedSize ? target : pool;
+  const seedAgents = sample(seedPool, Math.min(seedSize, seedPool.length), rng);
+
+  let frontier = seedAgents;
+  let waveIdx = 0;
+
+  while (frontier.length > 0 && waveIdx < maxWaves) {
+    const events = [];
+    const engagersThisWave = [];
+    let impressions = 0;
+
+    for (const p of frontier) {
+      if (seen.has(p.id)) continue;
+      seen.add(p.id);
+      impressions++;
+
+      const probs = engagementProbs(p, content);
+      const watches = rng() < probs.watch;
+      if (!watches) {
+        events.push({ personaId: p.id, personaName: p.name, emoji: p.emoji, bio: p.bio, action: 'skip', wave: waveIdx });
+        continue;
+      }
+      events.push({ personaId: p.id, personaName: p.name, emoji: p.emoji, bio: p.bio, action: 'watch', wave: waveIdx });
+
+      const like = rng() < probs.like;
+      const comment = rng() < probs.comment;
+      const share = rng() < probs.share;
+
+      let strength = 0;
+      if (like) strength += 1;
+      if (comment) strength += 2;
+      if (share) strength += 3;
+
+      if (strength > 0) {
+        const rec = engaged.get(p.id) || { persona: p, likes: 0, comments: 0, shares: 0 };
+        if (like) rec.likes++;
+        if (comment) rec.comments++;
+        if (share) rec.shares++;
+        engaged.set(p.id, rec);
+        engagersThisWave.push({ p, strength });
+      }
+
+      if (like) events.push({ personaId: p.id, personaName: p.name, emoji: p.emoji, bio: p.bio, action: 'like', wave: waveIdx });
+      if (comment) events.push({ personaId: p.id, personaName: p.name, emoji: p.emoji, bio: p.bio, action: 'comment', wave: waveIdx, comment: commentFor(p, content, rng) });
+      if (share) events.push({ personaId: p.id, personaName: p.name, emoji: p.emoji, bio: p.bio, action: 'share', wave: waveIdx });
+    }
+
+    waves.push({ wave: waveIdx, impressions, events });
+
+    if (impressions <= 1) break;
+
+    const next = new Set();
+    for (const { p, strength } of engagersThisWave) {
+      const k = 2 + strength * 2;
+      const neighbors = pool
+        .filter((o) => !seen.has(o.id) && o.id !== p.id)
+        .map((o) => ({ id: o.id, rel: relatedness(p, o) }))
+        .sort((x, y) => y.rel - x.rel)
+        .slice(0, k);
+      for (const n of neighbors) if (rng() < clamp01(n.rel + 0.1)) next.add(n.id);
+    }
+
+    if (waveIdx > 0 && outerExplorePct > 0) {
+      const outer = pool.filter((o) => !o.inTarget && !seen.has(o.id));
+      const count = Math.max(1, Math.round(frontier.length * (outerExplorePct / 100)));
+      for (const o of sample(outer, Math.min(count, outer.length), rng)) next.add(o.id);
+    }
+
+    let nextArr = [...next];
+    const cap = Math.max(1, frontier.length * 4);
+    if (nextArr.length > cap) nextArr = sample(nextArr, cap, rng);
+    frontier = nextArr.map((id) => byId.get(id)).filter(Boolean);
+
+    waveIdx++;
+  }
+
+  return computeReport({ waves, engaged, seen, pool, seedSize, content, audience: audienceIn, maxWaves: waveIdx, seed });
+}
+
+// ── Report: metrics, clusters, insights, comments, agent map ────────────────
+
+function computeReport(args) {
+  const { waves, engaged, seen, pool, seedSize, content, audience, maxWaves, seed } = args;
+  const impressions = waves.reduce((s, w) => s + w.impressions, 0);
+  let likes = 0, comments = 0, shares = 0;
+  const engagedPersonas = [];
+  for (const rec of engaged.values()) { engagedPersonas.push(rec); likes += rec.likes; comments += rec.comments; shares += rec.shares; }
+
+  const actions = likes + comments + shares;
+  const engagementRate = impressions ? round1((actions / impressions) * 100) : 0;
+  const amplification = seedSize ? round1(seen.size / seedSize) : 0;
+  const viralityScore = engagedPersonas.length ? round2((shares * 3 + comments * 2 + likes) / engagedPersonas.length) : 0;
+  const outerEngaged = engagedPersonas.filter((r) => !r.persona.inTarget).length;
+  const breakoutPct = engagedPersonas.length ? round1((outerEngaged / engagedPersonas.length) * 100) : 0;
+
+  const metrics = { impressions, reach: seen.size, seedSize, likes, comments, shares, engagementRate, amplification, viralityScore, breakoutPct, waves: maxWaves };
+
+  // Agent map data — every persona, positioned by interest fit & engagement.
+  const maxStr = Math.max(1, ...pool.map((p) => {
+    const rec = engaged.get(p.id);
+    return rec ? rec.likes + rec.comments * 2 + rec.shares * 3 : 0;
+  }));
+  const agents = pool.map((p) => {
+    const rec = engaged.get(p.id);
+    const strength = rec ? rec.likes + rec.comments * 2 + rec.shares * 3 : 0;
+    return {
+      id: p.id, name: p.name, emoji: p.emoji,
+      cluster: p.clusters[0] || 'general',
+      inTarget: p.inTarget, seen: seen.has(p.id),
+      aff: round2(affinity(p, content)),
+      strength,
+      norm: round2(strength / maxStr),
+    };
+  });
+
+  const clusters = clusterStats(engagedPersonas, actions);
+  const commentRate = impressions ? round1((comments / impressions) * 100) : 0;
+  const shareRate = impressions ? round1((shares / impressions) * 100) : 0;
+
+  const insights = [];
+  if (engagementRate < 4) insights.push({ level:'bad', title:'Weak hook', detail:'Only ' + engagementRate + '% of impressions turn into engagement. The first 2–3 seconds need to stop the scroll — tighten the hook and lead with the payoff.' });
+  else if (engagementRate > 12) insights.push({ level:'good', title:'Strong hook', detail:engagementRate + '% engagement per impression is high. The content is connecting — keep the same energy across the full video.' });
+  else insights.push({ level:'warn', title:'Decent hook, room to grow', detail:engagementRate + '% of impressions engage. Test a faster opening or a stronger visual in the first second to push into the top tier.' });
+
+  if (shareRate < 0.8) insights.push({ level:'warn', title:'Low shareability', detail:'Only ' + shareRate + '% of impressions become shares. Shares are the strongest Explore signal — add an explicit reason to share ("tag someone who needs this").' });
+  else if (shareRate > 3) insights.push({ level:'good', title:'Highly shareable', detail:shareRate + '% of impressions get shared. The Explore algorithm weights this heavily — expect strong secondary reach.' });
+
+  if (breakoutPct >= 25) insights.push({ level:'good', title:'Breaks demographic boundaries', detail:breakoutPct + '% of engagement comes from agents outside your target demographic. The content has mainstream appeal — consider widening paid targeting.' });
+  else if (breakoutPct > 0) insights.push({ level:'warn', title:'Mostly stays in-target', detail:'Only ' + breakoutPct + '% of engagement is from outside the target demo. Fine for a niche product — expect slower but more qualified growth.' });
+
+  let peak = { i: 0, e: 0 };
+  for (const w of waves) {
+    const e = w.events.filter((x) => x.action === 'like' || x.action === 'comment' || x.action === 'share').length;
+    if (e > peak.e) peak = { i: w.wave, e };
+  }
+  if (amplification >= 3) {
+    insights.push(peak.i < 2
+      ? { level:'good', title:'Strong early momentum', detail:'Engagement spikes at wave ' + peak.i + ' and radiates outward (' + amplification + '× reach). The core audience is the engine — keep feeding them similar angles.' }
+      : { level:'good', title:'Sustained propagation', detail:'Engagement peaks at wave ' + peak.i + ' with ' + amplification + '× amplification — the video keeps earning pushes into new clusters past the initial audience.' });
+  } else {
+    insights.push(peak.i < 2
+      ? { level:'warn', title:'Niche-only appeal', detail:'Engagement peaks at wave ' + peak.i + ' and collapses — the video resonates with a narrow cluster but doesn’t radiate outward. Broaden the interest tags or angle.' }
+      : { level:'warn', title:'Spreads, but stays small', detail:'The video reaches a few new clusters (' + amplification + '× amplification) but never compounds. A stronger hook or share trigger could change that.' });
+  }
+
+  if (commentRate < 0.6) insights.push({ level:'warn', title:'Few comments', detail:'Only ' + commentRate + '% of impressions comment. Comments drive algorithmic weight — end with a question or a debate-worthy claim.' });
+
+  if (clusters.length) {
+    const top = clusters[0];
+    insights.push({ level:'good', title:'Best audience: ' + top.label, detail:top.emoji + ' ' + top.label + ' drove ' + round1(top.engagementShare) + '% of engagement (' + top.engagers + ' agents). Double down on content angled at them.' });
+  }
+
+  const topComments = [];
+  const commentWeights = new Map();
+  for (const w of waves) for (const ev of w.events) {
+    if (ev.action === 'comment' && ev.comment) {
+      const rec = engaged.get(ev.personaId);
+      const weight = rec ? rec.likes + rec.comments * 2 + rec.shares * 3 : 1;
+      const existing = commentWeights.get(ev.personaId);
+      if (!existing || weight > existing.weight) commentWeights.set(ev.personaId, { rec, weight, text: ev.comment });
+    }
+  }
+  for (const { rec, text } of [...commentWeights.values()].sort((a, b) => b.weight - a.weight).slice(0, 8)) {
+    const key = rec ? (rec.persona.clusters[0] || 'general') : 'general';
+    topComments.push({ personaName: rec ? rec.persona.name : 'Agent', emoji: rec ? rec.persona.emoji : '🤖', clusterLabel: (CLUSTERS[key] || {}).label || 'General', comment: text });
+  }
+
+  return {
+    seed, waves, metrics, clusters, insights, topComments, agents,
+    content: { tags: content.tags.map((t) => t.tag), style: content.style },
+    audience: { description: audience.description, interestTags: audience.interestTags, ageMin: audience.ageMin, ageMax: audience.ageMax },
+  };
+}
+
+function clusterStats(engagedPersonas, totalActions) {
+  const agg = new Map();
+  for (const rec of engagedPersonas) {
+    for (const c of rec.persona.clusters) {
+      let a = agg.get(c);
+      if (!a) { a = { engagers: new Set(), likes: 0, comments: 0, shares: 0 }; agg.set(c, a); }
+      a.engagers.add(rec.persona.id); a.likes += rec.likes; a.comments += rec.comments; a.shares += rec.shares;
+    }
+  }
+  const out = [];
+  for (const [key, a] of agg) {
+    const def = CLUSTERS[key];
+    const engagement = a.likes + a.comments + a.shares;
+    out.push({
+      key, label: def ? def.label : key, emoji: def ? def.emoji : '🔹', engagers: a.engagers.size,
+      likes: a.likes, comments: a.comments, shares: a.shares,
+      engagementShare: totalActions ? round1((engagement / totalActions) * 100) : 0,
+      shareRate: a.engagers.size ? round1((a.shares / a.engagers.size) * 100) : 0,
+      commentRate: a.engagers.size ? round1((a.comments / a.engagers.size) * 100) : 0,
+    });
+  }
+  return out.sort((x, y) => y.engagementShare - x.engagementShare).slice(0, 6);
+}
+
+// ── Audience normalization ──────────────────────────────────────────────────
+
+function normalizeAudience(a) {
+  a = a || {};
+  const interestTags = new Set();
+  const push = (t) => { const s = String(t == null ? '' : t).toLowerCase().trim(); if (s) interestTags.add(s); };
+  (a.interestTags || []).forEach(push);
+  const text = String(a.description || '').toLowerCase() + ' ' + String(a.interests || '').toLowerCase();
+  for (const key of CLUSTER_KEYS) for (const t of CLUSTERS[key].tags) if (text.includes(t)) push(t);
+  extractKeywords(String(a.description || ''), 3).forEach(push);
+
+  let ageMin = 13, ageMax = 80;
+  const r = a.ageRange;
+  if (typeof r === 'string') {
+    const m = r.match(/(\d+)\s*-\s*(\d+)/);
+    if (m) { ageMin = Number(m[1]); ageMax = Number(m[2]); }
+    else if (r.includes('+')) { ageMin = Number(r.replace('+', '')) || 35; ageMax = 80; }
+  } else if (Array.isArray(r) && r.length >= 2) { ageMin = Number(r[0]) || 13; ageMax = Number(r[1]) || 80; }
+
+  return { description: String(a.description || ''), interestTags: [...interestTags].slice(0, 8), ageMin, ageMax, regions: Array.isArray(a.regions) ? a.regions.map(String) : [] };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   UI
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const $ = (id) => document.getElementById(id);
+const BADGES = {
+  like: { icon:'♥', text:'like', cls:'like' }, comment: { icon:'💬', text:'comment', cls:'comment' },
+  share: { icon:'🔁', text:'share', cls:'share' }, watch: { icon:'👀', text:'watch', cls:'watch' },
+  skip: { icon:'✕', text:'skipped', cls:'skip' },
+};
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (ch) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+}
+
+function renderChips() {
+  const wrap = $('audChips');
+  wrap.innerHTML = '';
+  for (const key of CLUSTER_KEYS) {
+    const c = CLUSTERS[key];
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.dataset.key = key;
+    b.innerHTML = c.emoji + ' ' + c.label;
+    b.addEventListener('click', () => b.classList.toggle('on'));
+    wrap.appendChild(b);
+  }
+}
+
+function bindEvents() {
+  $('hook').addEventListener('input', () => ($('hookVal').textContent = $('hook').value));
+  $('quality').addEventListener('input', () => ($('qualityVal').textContent = $('quality').value));
+  $('runBtn').addEventListener('click', () => runSim());
+  $('replayBtn').addEventListener('click', () => runSim(lastSeed));
+  $('dzLink').addEventListener('click', () => $('videoFile').click());
+  $('viewMap').addEventListener('click', () => setView('map'));
+  $('viewCurve').addEventListener('click', () => setView('curve'));
+}
+
+// ── Video upload (local-only: metadata + preview, no network) ──────────────
+
+function bindUpload() {
+  const dz = $('dropzone');
+  const input = $('videoFile');
+  dz.addEventListener('click', (e) => {
+    if (e.target.closest('#dzClear') || e.target.closest('video')) return;
+    input.click();
+  });
+  ['dragover', 'dragenter'].forEach((ev) =>
+    dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('drag'); }));
+  ['dragleave', 'drop'].forEach((ev) =>
+    dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('drag'); }));
+  dz.addEventListener('drop', (e) => {
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) handleVideoFile(f);
+  });
+  input.addEventListener('change', () => { if (input.files && input.files[0]) handleVideoFile(input.files[0]); });
+  $('dzClear').addEventListener('click', clearVideo);
+}
+
+function handleVideoFile(file) {
+  if (!file.type.startsWith('video/')) { alert('Please choose a video file.'); return; }
+  if (window._videoUrl) URL.revokeObjectURL(window._videoUrl);
+  const url = URL.createObjectURL(file);
+  window._videoUrl = url;
+
+  const video = $('videoPreview');
+  video.src = url;
+  video.hidden = false;
+  video.play().catch(() => {});
+
+  const size = file.size > 1e6 ? (file.size / 1e6).toFixed(1) + ' MB' : Math.round(file.size / 1e3) + ' KB';
+  $('dzFileMeta').textContent = file.name + ' · ' + size;
+  $('dzFile').hidden = false;
+  $('dzInner').hidden = true;
+
+  const base = file.name.replace(/\.[^.]+$/, '');
+  $('title').value = base.length > 60 ? base.slice(0, 60) : base;
+  const words = base.split(/[^a-z0-9+#]+/i).filter((w) => w.length > 2 && !STOPWORDS.has(w.toLowerCase())).slice(0, 4);
+  if (words.length) $('tags').value = words.join(', ');
+
+  video.addEventListener('loadedmetadata', () => {
+    const d = video.duration;
+    if (isFinite(d)) $('length').value = String(d <= 45 ? 30 : d <= 100 ? 60 : d <= 200 ? 120 : 300);
+  }, { once: true });
+}
+
+function clearVideo() {
+  if (window._videoUrl) { URL.revokeObjectURL(window._videoUrl); window._videoUrl = null; }
+  const video = $('videoPreview');
+  video.pause();
+  video.removeAttribute('src');
+  video.hidden = true;
+  $('dzFile').hidden = true;
+  $('dzInner').hidden = false;
+  $('videoFile').value = '';
+}
+
+// ── Run & render ────────────────────────────────────────────────────────────
+
+let lastSeed = null;
+let lastResult = null;
+let currentView = 'map';
+
+function collectPayload() {
+  const chips = [...document.querySelectorAll('#audChips .chip.on')].map((c) => c.dataset.key);
+  const age = $('ageRange').value;
+  const [ageMin, ageMax] = age === 'any' ? [13, 80] : age.includes('+') ? [parseInt(age, 10), 80] : age.split('-').map(Number);
+  return {
+    content: {
+      title: $('title').value, description: $('desc').value,
+      tags: $('tags').value.split(',').map((s) => s.trim()).filter(Boolean),
+      style: $('style').value, hook: +$('hook').value, quality: +$('quality').value, lengthSec: +$('length').value,
+    },
+    audience: { description: $('audDesc').value, interestTags: chips, ageRange: ageMin + '-' + ageMax, regions: [] },
+    config: {
+      poolSize: +$('poolSize').value || 200, seedSize: +$('seedSize').value || 12,
+      maxWaves: +$('maxWaves').value || 12, outerExplorePct: $('outerPct').value === '' ? 8 : +$('outerPct').value,
+    },
+  };
+}
+
+function setBusy(busy) {
+  $('runBtn').disabled = busy;
+  $('replayBtn').disabled = busy;
+  $('runBtn').textContent = busy ? '⏳ Running…' : '▶ Run simulation…';
+  $('simStatus').textContent = busy ? 'running…' : 'complete';
+}
+
+function runSim(seed) {
+  setBusy(true);
+  setTimeout(() => {
+    try {
+      const payload = collectPayload();
+      const result = simulate(payload.content, normalizeAudience(payload.audience), Object.assign({}, payload.config, { seed: typeof seed === 'number' ? seed : undefined }));
+      lastSeed = result.seed;
+      lastResult = result;
+      render(result);
+    } catch (err) {
+      $('metrics').innerHTML = '<div class="placeholder error">Simulation failed: ' + esc(err.message) + '</div>';
+    } finally {
+      setBusy(false);
+    }
+  }, 30);
+}
+
+function render(data) {
+  $('agentCounter').textContent = data.agents.length + ' agents';
+  $('seedLine').textContent = 'Seed: ' + data.seed + ' · replayable with 🔁';
+  $('metrics').innerHTML = metricsHTML(data.metrics);
+  $('clusterBars').innerHTML = clusterBarsHTML(data.clusters);
+  $('insights').innerHTML = insightsHTML(data.insights);
+  $('comments').innerHTML = commentsHTML(data.topComments);
+  setView(currentView);
+  playFeed(data.waves);
+}
+
+function metricsHTML(m) {
+  const cards = [
+    ['Predicted reach', m.reach, 'unique agents who saw it'],
+    ['Impressions', m.impressions, 'across ' + m.waves + ' waves'],
+    ['Engagement rate', m.engagementRate + '%', 'actions per impression'],
+    ['Amplification', '×' + m.amplification, 'reach vs. seed audience'],
+    ['Virality score', m.viralityScore, 'shares+comments weighted'],
+    ['Breakout', m.breakoutPct + '%', 'engagement outside target'],
+  ];
+  return cards.map(([t, v, s]) =>
+    '<div class="metric"><div class="m-label">' + t + '</div><div class="m-value">' + v + '</div><div class="m-sub">' + s + '</div></div>'
+  ).join('');
+}
+
+// ── Agent map (people silhouettes) & spread chart ───────────────────────────
+
+function prepCanvas(cv, h) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth || cv.parentElement.clientWidth || 900;
+  cv.height = h * dpr;
+  cv.width = w * dpr;
+  cv.style.width = w + 'px';
+  cv.style.height = h + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+
+/** Draw a person silhouette (head + shoulders) — not a circle. */
+function drawPerson(ctx, x, y, r, color) {
+  ctx.fillStyle = color;
+  // head
+  ctx.beginPath();
+  ctx.arc(x, y - 1.55 * r, 0.5 * r, 0, Math.PI * 2);
+  ctx.fill();
+  // shoulders / chest
+  ctx.beginPath();
+  ctx.ellipse(x, y - 0.15 * r, 0.85 * r, 0.7 * r, 0, Math.PI, 0);
+  ctx.fill();
+}
+
+function setView(v) {
+  currentView = v;
+  $('viewMap').classList.toggle('on', v === 'map');
+  $('viewCurve').classList.toggle('on', v === 'curve');
+  if (lastResult) {
+    if (v === 'map') drawAgentMap(lastResult);
+    else drawSpread(lastResult);
+  }
+}
+
+function drawAgentMap(data) {
+  const cv = $('vizChart');
+  const { ctx, w, h } = prepCanvas(cv, 430);
+  const agents = data.agents;
+  const jit = (id, salt) => (((id * 2654435761 + salt) >>> 0) % 1000) / 1000 - 0.5;
+
+  // subtle grid
+  ctx.strokeStyle = '#eef0f5';
+  ctx.lineWidth = 1;
+  for (let gx = 0; gx <= 10; gx++) {
+    ctx.beginPath(); ctx.moveTo((w / 10) * gx, 0); ctx.lineTo((w / 10) * gx, h - 26); ctx.stroke();
+  }
+  for (let gy = 0; gy <= 8; gy++) {
+    ctx.beginPath(); ctx.moveTo(0, ((h - 26) / 8) * gy); ctx.lineTo(w, ((h - 26) / 8) * gy); ctx.stroke();
+  }
+
+  const pad = 34;
+  const iw = w - pad * 2;
+  const ih = h - pad - 40;
+
+  for (const a of agents) {
+    const x = pad + a.aff * iw + jit(a.id, 7) * 14;
+    let y;
+    if (a.strength > 0) {
+      y = pad + (1 - a.norm) * ih * 0.85;
+    } else {
+      y = pad + ih * 0.55 + (1 - a.aff) * ih * 0.3 + jit(a.id, 13) * 16;
+    }
+    let color = '#e2e6ee'; // never seen
+    if (a.seen && a.strength === 0) color = '#c9cfdc'; // seen, no engagement
+    if (a.strength > 0) color = a.inTarget ? '#3b82f6' : '#f97316';
+    const r = a.strength > 0 ? 6 + a.norm * 9 : 4;
+    drawPerson(ctx, x, y, r, color);
+  }
+
+  // axis labels
+  ctx.fillStyle = '#9aa3b5';
+  ctx.font = '11px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText('interest fit →', w / 2, h - 8);
+  ctx.save();
+  ctx.translate(12, h / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('engagement ↑', 0, 0);
+  ctx.restore();
+
+  drawMapLegend();
+}
+
+function drawMapLegend() {
+  const entries = [
+    ['lgSeen', '#c9cfdc'],
+    ['lgCore', '#3b82f6'],
+    ['lgBreak', '#f97316'],
+  ];
+  for (const [id, color] of entries) {
+    const cv = $(id);
+    if (!cv) continue;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = 16 * dpr; cv.height = 22 * dpr;
+    cv.style.width = '16px'; cv.style.height = '22px';
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, 16, 22);
+    drawPerson(ctx, 8, 17, 5, color);
+  }
+}
+
+function drawSpread(data) {
+  const cv = $('vizChart');
+  const { ctx, w, h } = prepCanvas(cv, 430);
+  const waves = data.waves;
+  const series = waves.map((wv) => ({
+    i: wv.impressions,
+    e: wv.events.filter((x) => x.action === 'like' || x.action === 'comment' || x.action === 'share').length,
+  }));
+  const max = Math.max(1, ...series.map((d) => d.i));
+  const pad = { l: 48, r: 16, t: 20, b: 34 };
+  const iw = w - pad.l - pad.r;
+  const ih = h - pad.t - pad.b;
+  const x = (idx) => pad.l + (series.length === 1 ? iw / 2 : (idx / (series.length - 1)) * iw);
+  const y = (v) => pad.t + ih - (v / max) * ih;
+
+  ctx.strokeStyle = '#eef0f5'; ctx.lineWidth = 1; ctx.fillStyle = '#9aa3b5';
+  ctx.font = '11px system-ui'; ctx.textAlign = 'right';
+  for (let g = 0; g <= 4; g++) {
+    const gy = pad.t + (ih * g) / 4;
+    ctx.beginPath(); ctx.moveTo(pad.l, gy); ctx.lineTo(w - pad.r, gy); ctx.stroke();
+    ctx.fillText(Math.round(max * (1 - g / 4)), pad.l - 8, gy + 4);
+  }
+
+  const line = (pts, color, width) => {
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    pts.forEach(([px, py], i) => (i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)));
+    ctx.stroke();
+    ctx.fillStyle = color;
+    for (const [px, py] of pts) { ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill(); }
+  };
+  line(series.map((d, idx) => [x(idx), y(d.i)]), '#2563eb', 2.5);
+  line(series.map((d, idx) => [x(idx), y(Math.max(1, d.e))]), '#f97316', 2.5);
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#9aa3b5';
+  ctx.fillStyle = '#2563eb'; ctx.fillRect(pad.l, 8, 14, 3); ctx.fillText('impressions', pad.l + 20, 13);
+  ctx.fillStyle = '#f97316'; ctx.fillRect(pad.l + 130, 8, 14, 3); ctx.fillText('engagement', pad.l + 150, 13);
+
+  ctx.textAlign = 'center'; ctx.fillStyle = '#9aa3b5';
+  const step = Math.max(1, Math.ceil(series.length / 8));
+  series.forEach((_, idx) => { if (idx % step === 0) ctx.fillText('w' + idx, x(idx), h - 8); });
+}
+
+// ── Feed, lists ─────────────────────────────────────────────────────────────
+
+function eventRow(ev) {
+  const b = BADGES[ev.action];
+  const row = document.createElement('div');
+  row.className = 'evt';
+  row.innerHTML = '<span class="ava">' + ev.emoji + '</span>' +
+    '<span class="who"><b>' + esc(ev.personaName) + '</b><span class="bio">' + esc(ev.bio) + '</span></span>' +
+    '<span class="act act-' + b.cls + '">' + b.icon + ' ' + b.text + '</span>';
+  if (ev.comment) {
+    const c = document.createElement('div');
+    c.className = 'evt-comment';
+    c.textContent = '“' + ev.comment + '”';
+    row.appendChild(c);
+  }
+  return row;
+}
+
+function playFeed(waves) {
+  const feed = $('feed');
+  feed.innerHTML = '';
+  let i = 0;
+  const step = () => {
+    if (i >= waves.length) {
+      const done = document.createElement('div');
+      done.className = 'wave';
+      done.innerHTML = '<div class="wave-head"><span class="wave-n">✓ complete</span><span class="wave-meta">simulation finished</span></div>';
+      feed.appendChild(done);
+      feed.scrollTop = feed.scrollHeight;
+      return;
+    }
+    const w = waves[i];
+    const block = document.createElement('div');
+    block.className = 'wave';
+    block.innerHTML = '<div class="wave-head"><span class="wave-n">Wave ' + w.wave + (w.wave === 0 ? ' · seed audience' : '') + '</span><span class="wave-meta">' + w.impressions + ' impressions</span></div>';
+    for (const ev of w.events) block.appendChild(eventRow(ev));
+    feed.appendChild(block);
+    feed.scrollTop = feed.scrollHeight;
+    i++;
+    setTimeout(step, 170);
+  };
+  step();
+}
+
+function clusterBarsHTML(clusters) {
+  if (!clusters.length) return '<div class="placeholder">No engagement recorded.</div>';
+  return clusters.map((c) =>
+    '<div class="cbar"><div class="cbar-top"><span class="cbar-label">' + c.emoji + ' ' + esc(c.label) + '</span>' +
+    '<span class="cbar-meta">' + c.engagers + ' agents · ' + c.engagementShare + '% of engagement · ' + c.shareRate + '% share rate</span></div>' +
+    '<div class="cbar-track"><div class="cbar-fill" style="width:' + Math.max(2, c.engagementShare * 3) + '%"></div></div></div>'
+  ).join('');
+}
+
+function insightsHTML(insights) {
+  const icon = { good: '🟢', warn: '🟠', bad: '🔴' };
+  return insights.map((i) =>
+    '<li class="insight ' + i.level + '"><span class="ins-icon">' + icon[i.level] + '</span><div><b>' + esc(i.title) + '</b><p>' + esc(i.detail) + '</p></div></li>'
+  ).join('');
+}
+
+function commentsHTML(comments) {
+  if (!comments.length) return '<div class="placeholder">No comments this run.</div>';
+  return comments.map((c) =>
+    '<div class="comment"><span class="ava">' + c.emoji + '</span><div class="comment-body"><b>' + esc(c.personaName) + '</b> <span class="muted">· ' + esc(c.clusterLabel) + '</span><p>' + esc(c.comment) + '</p></div></div>'
+  ).join('');
+}
+
+// ── Boot ────────────────────────────────────────────────────────────────────
+
+renderChips();
+bindEvents();
+bindUpload();
+drawMapLegend();
+runSim(2025); // demo run on load — seeded for a lively, viral-shaped run
+</script>
+</body>
+</html>

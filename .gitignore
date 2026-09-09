@@ -1,0 +1,10 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Node/Bun (only used for optional deck generation in scratch/)
+node_modules/
+bun.lock
+
+# Local deploy artifacts
+scratch/deploy/
